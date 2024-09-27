@@ -76,3 +76,30 @@ void draw() {
     }
   }
 }
+
+
+// sourced from Make_Curvey_Road.pde file:
+
+//void mousePressed() {
+//  for( PVector d: dots) {
+//    if( dist(d.x, d.y, mouseX, mouseY) < r) {
+//      someDotHasBeenClicked = true;
+//      selectedDot = d;
+//    }
+//  }
+//}
+
+
+//void mouseReleased() {
+//  someDotHasBeenClicked = false;
+//  selectedDot = null; //no value
+//}
+  
+  
+//void mouseDragged() {
+//  if( someDotHasBeenClicked == true ) {
+//    selectedDot.x = mouseX;
+//    selectedDot.y = mouseY;
+//    redraw();  //Calls draw() once more
+//  }
+//}
