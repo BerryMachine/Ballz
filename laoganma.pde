@@ -1,105 +1,99 @@
-int radius = 30, padding = 50, from_top = 0, cols, rows;
-int[][] parameters;
-String[] row_of_parameters;
-int[][] prev_row_coords, curr_row_coords;
+int radius = 15;
+//padding on each side
+int padding = 50;
+//width of screen
+int Width = 500;
+
+//the imported data from the text file
+String[] grid;
+
+int cols, rows, spacing;
+
+PVector[] balls, iballs, colors;
+String[] parameters;
+int from_top = 0;
+
+boolean selected = false;
+int rowSelected;
+PVector mouseWhenSelected;
 
 void setup() {
   size(500, 500);
-  background(0);
-  noLoop();         // no animation 
+  stroke(255);
   
   String[] grid = loadStrings("grid data.txt");
-  
+
+  //setting dimensions for the drawn circles
   cols = int(grid[0]);
   rows = grid.length-1;
   
-  parameters = new int[rows][4];
-  row_of_parameters = new String[cols];
-  prev_row_coords = new int[cols][2];
-  curr_row_coords = new int[cols][2];
+  //spacing between adjacent circles
+  spacing = (Width-2*padding)/(cols-1);
   
-  //translate the grid into the 2D array "parameters" - each row is in the form of {R, G, B, distance from top}
+  //this contains the dimensions for the leftmost circle on each row
+  balls = new PVector[rows];
+  
+  colors = new PVector[rows];
+  parameters = new String[cols];
+
   for(int row = 1; row < rows+1; row++){
-    row_of_parameters = grid[row].split("\t");
-    from_top += int(row_of_parameters[3]);
+    parameters = grid[row].split("\t");
+    from_top += int(parameters[3]);
     for(int col = 0; col < 3; col++){
-      parameters[row-1][col] = int(row_of_parameters[col]);
-      parameters[row-1][3] = from_top;
+      colors[row-1] = new PVector(int(parameters[0]), int(parameters[1]), int(parameters[2]));
+      balls[row-1] = new PVector(padding, from_top);
     }
   }
+  
+  //iballs provides the initial positions of the leftmost balls when the mouse is clicked
+  iballs = new PVector[balls.length];
 }
 
-void draw() {
-  // white lines
-  stroke(255);
-  
-  // from top to bottom
+
+void draw(){
+  if(selected){
+    balls[rowSelected] = new PVector(mouseX - mouseWhenSelected.x + iballs[rowSelected].x, mouseY - mouseWhenSelected.y + iballs[rowSelected].y);
+  }
+  drawCircles();
+  drawLines();
+}
+
+void mousePressed(){
   for(int row = 0; row < rows; row++){
-    // extract y-coordinate of row
-    int y = parameters[row][3];
-    
-    // extract color of ball
-    fill(parameters[row][0], parameters[row][1], parameters[row][2]);
-    
-    // from left to right
+    PVector b = balls[row];
     for(int col = 0; col < cols; col++){
-      // calculate x coordinate of ball in row
-      int x = padding + col*(width - 2*padding) / (cols-1);
-      //println(y);
-      
-      if (row == 0) { // when prev_row_coords is empty
-        prev_row_coords[col][0] = x;
-        prev_row_coords[col][1] = y;
-      } else { // when prev_row_coords is not empty
-        curr_row_coords[col][0] = x;
-        curr_row_coords[col][1] = y;
-      
-        // draw line
-        for (int[] prev_row : prev_row_coords) {
-          line(prev_row[0], prev_row[1], x, y);
-        }
-      
-        // copy without reference (prev_row_coords = curr_row_coords)
-        // stupid arrayCopy() doesn't work for 2d arrays and I wasted 2 hours figuring out why
-        // needed to "deep copy"
-        if (col == cols-1) {
-          for (int copy = 0;  copy < cols; copy++) {
-            arrayCopy(curr_row_coords[copy], prev_row_coords[copy]);
-          }
-        }
+      if(dist(b.x + spacing*col, b.y, mouseX, mouseY) < radius){
+        selected = true;
+        rowSelected = row;
         
+        //provides the initial positions of the mouse when the mouse is clicked
+        mouseWhenSelected = new PVector(mouseX, mouseY);
+        arrayCopy(balls, iballs);
       }
-      
-      // draw circle
-      circle(x, y, radius);
-      
     }
   }
 }
 
+void mouseReleased() {
+  selected = false;
+}
 
-// sourced from Make_Curvey_Road.pde file:
+void drawCircles(){
+  background(0);
+  for(int row = 0; row < rows; row++){
+    fill(colors[row].x, colors[row].y, colors[row].z);
+    for(int col = 0; col < cols; col++){
+      circle(balls[row].x + spacing*col, balls[row].y, radius*2);
+    }
+  }
+}
 
-//void mousePressed() {
-//  for( PVector d: dots) {
-//    if( dist(d.x, d.y, mouseX, mouseY) < r) {
-//      someDotHasBeenClicked = true;
-//      selectedDot = d;
-//    }
-//  }
-//}
-
-
-//void mouseReleased() {
-//  someDotHasBeenClicked = false;
-//  selectedDot = null; //no value
-//}
-  
-  
-//void mouseDragged() {
-//  if( someDotHasBeenClicked == true ) {
-//    selectedDot.x = mouseX;
-//    selectedDot.y = mouseY;
-//    redraw();  //Calls draw() once more
-//  }
-//}
+void drawLines(){
+  for(int row = 0; row < rows-1; row++){
+    for(int col1 = 0; col1 < cols; col1++){
+      for(int col2 = 0; col2 < cols; col2++){
+        line(balls[row].x + spacing*col1, balls[row].y, balls[row+1].x + spacing*col2, balls[row+1].y);
+      }
+    }
+  }
+}
